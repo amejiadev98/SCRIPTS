@@ -1,0 +1,25 @@
+#!/bin/bash
+
+DB_NAME='TU_DB'
+DB_USER='TU_USUARIO'
+DB_HOST='TU_HOST'
+DB_PORT=5432
+BACKUP_DIR=/tmp
+BACKUP_FILE="$BACKUP_DIR/$DB_NAME-$(date +%Y%m%d%H%M%S).sql.gz"
+
+PGPASSWORD=TU_PASSWORD pg_dump -h $DB_HOST -p $DB_PORT -U $DB_USER $DB_NAME | gzip > $BACKUP_FILE
+
+STORAGE_ACCOUNT_NAME="TU_CUENTA_STORAGE"
+BLOB_NAME="$DB_NAME-$(date +%Y%m%d%H%M%S).sql.gz"
+CONTAINER_NAME="TU_CONTENEDOR"
+STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=TU_CUENTA_STORAGE;AccountKey=TU_LLAVE;EndpointSuffix=core.windows.net"
+
+echo "Backup creado en $BACKUP_FILE"
+
+az storage blob upload --account-name $STORAGE_ACCOUNT_NAME \
+  --container-name $CONTAINER_NAME \
+  --name $BLOB_NAME \
+  --file $BACKUP_FILE \
+  --connection-string "$STORAGE_CONNECTION_STRING"
+
+echo "Archivo subido al blob de Azure: $BLOB_NAME"
